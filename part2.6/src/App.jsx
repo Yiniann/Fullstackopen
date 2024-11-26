@@ -48,24 +48,26 @@ const App = () => {
   persons.filter(person=> person.name.toLocaleLowerCase().includes(filter.toLowerCase())
 ) : persons;
 
-  return (
-    <div>
+return (
+  <div className="app-container">
+    <div className="left-panel">
       <h2>Phonebook</h2>
-      <div>
-        <Filter filter={filter} onFilterChange={handleFilterChange} />
-      </div>
+      <Filter filter={filter} onFilterChange={handleFilterChange} />
       <h2>Add a new</h2>
-      <PersonForm 
-       newName={newName}
-       newNumber={newNumber}
-       onNameChange={handlePersonChange}
-       onNumberChange={handleNumberChange}
-       onSubmit={addPerson}
-       />
-      <h2>Numbers</h2>
-      <Persons persons={personsToShow}/>
+      <PersonForm
+        newName={newName}
+        newNumber={newNumber}
+        onNameChange={handlePersonChange}
+        onNumberChange={handleNumberChange}
+        onSubmit={addPerson}
+      />
     </div>
-  )
+    <div className="right-panel">
+      <h2>Numbers</h2>
+      <Persons persons={personsToShow} />
+    </div>
+  </div>
+);
 }
 
 export default App
