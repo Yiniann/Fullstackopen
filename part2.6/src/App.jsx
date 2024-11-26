@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Filter from './Filter'
 import Persons from './Persons'
 import PersonForm from './PersonForm'
+import './styles.css'
 
 const App = () => {
   const [persons, setPersons] = useState([
@@ -11,31 +12,32 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
 
+  const handlePersonChange=(event)=> setNewName(event.target.value)
+  const handleNumberChange=(event)=> setNewNumber(event.target.value)
+  const handleFilterChange=(event)=>setFilter(event.target.value)
 
-  const handlePersonChange=(event)=>{
-    console.log(event.target.value)
-    setNewName(event.target.value)
-  }
-  const handleNumberChange=(event)=>{
-    console.log(event.target.value)
-    setNewNumber(event.target.value)
-  }
-  const handleFilterChange=(event)=>{
-    console.log(event.target.value)
-    setFilter(event.target.value)
-  }
+  const isDuplicateName=(name)=>persons.some(person=>person.name === name)
+  const isDuplicateNumber=(number)=>persons.some(person=>person.number === number)
 
   const addPerson =(event)=>{
     event.preventDefault()
-    if (persons.some(person=> person.name === newName)){
+    if (!newName.trim()){
+      alert('Please enter a name')
+      return
+    }
+    if (isDuplicateName(newName)){
       alert(`${newName} is already added to phonebook`)
+      return
+    }
+    if (isDuplicateNumber(newNumber)){
+      alert(`${newNumber}is already added to phonebook`)
       return
     }
     
     console.log('click add',event.target)
     const personObject={
       name:newName,
-      id: persons.length + 1,
+      id: Date.now(),
       number:newNumber
     }
     setPersons(persons.concat(personObject))
