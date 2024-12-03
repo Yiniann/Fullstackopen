@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import axios from 'axios';
 
 const App = () => {
-  const [countries, setCountries] = useState([]);
-  const [filter, setFilter] = useState('');
-  const [selectCountry, setSelectCountry] = useState(null);
-  const [filteredCountries, setFilteredCountries] = useState([]);
+  const [countries, setCountries] = useState([]);//储存APIget的数据
+  const [filter, setFilter] = useState('');//储存过滤器的输入数据
+  const [selectCountry, setSelectCountry] = useState(null);//储存列表点击选中状态
+  const [filteredCountries, setFilteredCountries] = useState([]);//储存过滤后的国家
 
   useEffect(() => {
     axios
@@ -45,14 +45,20 @@ const App = () => {
         />
       </div>
 
+      {filter === ''&& (
+        <p>please enter country name.</p>
+      )}
 
-      {filteredCountries.length > 10 && (
+      {filteredCountries.length === 0 && filter !== '' && (
+        <p>No countries found. Please refine your search.</p>
+      )}
+
+      {filteredCountries.length > 10 && filter !== ''&&(
         <p>Please make your search more specific.</p>
       )}
 
 
-      {filteredCountries.length > 1 && filteredCountries.length <= 10 && (
-        <h1>
+      {filteredCountries.length <= 10 && filteredCountries.length > 1 && (
           <ul>
             {filteredCountries.map((country) => (
               <li key={country.cca3} onClick={() => handleCountryClick(country)}>
@@ -60,7 +66,6 @@ const App = () => {
               </li>
             ))}
           </ul>
-        </h1>
       )}
 
       {filteredCountries.length === 1 && selectCountry && (
@@ -70,10 +75,11 @@ const App = () => {
           <p>Area: {selectCountry.area} km²</p>
           <p>Languages: {Object.values(selectCountry.languages || {}).join(', ')}</p>
           <img 
-            src={selectCountry.flags[0]} 
-            alt={`Flag of ${selectCountry.name.common}`} 
-            style={{ width: '100px' }} 
+          src={selectCountry.flags[0] || 'defaultFlag.png'} 
+          alt={`Flag of ${selectCountry.name.common}`} 
+          style={{ width: '100px' }} 
           />
+
         </div>
       )}
     </div>
