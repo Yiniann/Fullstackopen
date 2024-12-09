@@ -22,31 +22,50 @@ const App = () => {
   const handleNumberChange = (event) => setNewNumber(event.target.value);
   const handleFilterChange = (event) => setFilter(event.target.value);
 
-  const isDuplicateName = (name) => persons.some(person => person.name === name);
-  const isDuplicateNumber = (number) => persons.some(person => person.number === number);
-
   const addPerson = (event) => {
     event.preventDefault();
     if (!newName.trim()) {
       alert('Please enter a name');
       return;
     }
-    if (isDuplicateName(newName)) {
-      alert(`${newName} is already added to phonebook`);
-      return;
-    }
-    if (isDuplicateNumber(newNumber)) {
-      alert(`${newNumber} is already added to phonebook`);
-      return;
+    const existingPerson = persons.find(person =>person.name === newName)
+    
+    if (existingPerson){
+      const confirmUpdate = window.confirm(
+        `${newName}is already in the phonkbook,  replace the old number with the new one? `
+      )
+
+      if (confirmUpdate){
+        const updatedPerson={...existingPerson, number:newNumber}
+
+        personsServer
+        .update(existingPerson.id,updatedPerson)
+        .then(returnedPerson=>{
+          setPersons(persons.map(person=>
+            person.id !== existingPerson.id? person :returnedPerson
+          ))
+          setNewName('')
+          setNewNumber('')
+          alert(`Updated ${newName}'s number successfully.`)
+        })
+        .catch(error=>{
+          console.error('Error updating Person',error)
+          alert(`Failed to update ${newName}'s Number.Please check`)
+          setPersons(persons.filter(person=>person.id !==existingPerson.id))
+        })
+      }
+      return
     }
 
-    const personObject = { name: newName, number: newNumber };
+    const personObject = { name: newName, number: newNumber }
+
     personsServer
       .create(personObject)
       .then(returnedPerson => {
         setPersons(persons.concat(returnedPerson));
         setNewName('');
         setNewNumber('');
+        alert(`Added ${newName} successfully`)
       })
       .catch(error => console.error('Error adding person:', error));
   };

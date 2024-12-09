@@ -48,7 +48,7 @@ const App = () => {
   const toggleImportanceOf=(id)=>{
     const note = notes.find(n=> n.id === id)
     const changedNote= { ...note, important :! note.important}//处理重要性切换
-
+    
     //变更数据库
     noteService
     .update(id,changedNote)
