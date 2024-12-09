@@ -1,86 +1,95 @@
-import { useState, useEffect} from 'react'
-import Filter from './Filter'
-import Persons from './Persons'
-import PersonForm from './PersonForm'
-import './styles.css'
-import axios from 'axios'
+import { useState, useEffect } from 'react';
+import Filter from './Filter';
+import Persons from './Persons';
+import PersonForm from './PersonForm';
+import './styles.css';
+import personsServer from './services/persons';
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', id : 1, number: '040-1234567'}
-  ])
-  const [newName, setNewName] = useState('')
-  const [newNumber, setNewNumber] = useState('')
-  const [filter, setFilter] = useState('')
-  //状态钩子
-  useEffect(()=>{
-    axios
-    .get('http://203.55.176.209:3001/persons')
-    .then(response=>{
-      console.log('promise fullfilled')
-      setPersons(response.data)
-    })
-  },[])
-  console.log('render', persons.length, 'person')
+  const [persons, setPersons] = useState([]);
+  const [newName, setNewName] = useState('');
+  const [newNumber, setNewNumber] = useState('');
+  const [filter, setFilter] = useState('');
 
-  //事件处理
-  const handlePersonChange=(event)=> setNewName(event.target.value)
-  const handleNumberChange=(event)=> setNewNumber(event.target.value)
-  const handleFilterChange=(event)=>setFilter(event.target.value)
+  useEffect(() => {
+    personsServer
+      .getAll()
+      .then(initialPersons => setPersons(initialPersons))
+      .catch(error => console.error('Error fetching persons:', error));
+  }, []);
 
-  //判断是否重复
-  const isDuplicateName=(name)=>persons.some(person=>person.name === name)
-  const isDuplicateNumber=(number)=>persons.some(person=>person.number === number)
+  const handlePersonChange = (event) => setNewName(event.target.value);
+  const handleNumberChange = (event) => setNewNumber(event.target.value);
+  const handleFilterChange = (event) => setFilter(event.target.value);
 
-  const addPerson =(event)=>{
-    event.preventDefault()
-    if (!newName.trim()){
-      alert('Please enter a name')
-      return
-    }
-    if (isDuplicateName(newName)){
-      alert(`${newName} is already added to phonebook`)
-      return
-    }
-    if (isDuplicateNumber(newNumber)){
-      alert(`${newNumber}is already added to phonebook`)
-      return
-    }
-    
-    console.log('click add',event.target)
-    const personObject={
-      name:newName,
-      id: Date.now(),
-      number:newNumber
-    }
-    setPersons((prevPersons) => prevPersons.concat(personObject))
-    setNewName('')
-    setNewNumber('')
-  }
-  const personsToShow=filter ?
-  persons.filter(person=> person.name.toLocaleLowerCase().includes(filter.toLowerCase())
-) : persons;
+  const isDuplicateName = (name) => persons.some(person => person.name === name);
+  const isDuplicateNumber = (number) => persons.some(person => person.number === number);
 
-return (
-  <div className="app-container">
-    <div className="left-panel">
-      <h2>Phonebook</h2>
-      <Filter filter={filter} onFilterChange={handleFilterChange} />
-      <h2>Add a new</h2>
-      <PersonForm
-        newName={newName}
-        newNumber={newNumber}
-        onNameChange={handlePersonChange}
-        onNumberChange={handleNumberChange}
-        onSubmit={addPerson}
-      />
+  const addPerson = (event) => {
+    event.preventDefault();
+    if (!newName.trim()) {
+      alert('Please enter a name');
+      return;
+    }
+    if (isDuplicateName(newName)) {
+      alert(`${newName} is already added to phonebook`);
+      return;
+    }
+    if (isDuplicateNumber(newNumber)) {
+      alert(`${newNumber} is already added to phonebook`);
+      return;
+    }
+
+    const personObject = { name: newName, number: newNumber };
+    personsServer
+      .create(personObject)
+      .then(returnedPerson => {
+        setPersons(persons.concat(returnedPerson));
+        setNewName('');
+        setNewNumber('');
+      })
+      .catch(error => console.error('Error adding person:', error));
+  };
+
+  const handleDelete = (id, name) => {
+    if (window.confirm(`Do you really want to delete ${name}?`)) {
+      personsServer
+        .deletePerson(id)
+        .then(() => {
+          setPersons(persons.filter(person => person.id !== id));
+        })
+        .catch(error => {
+          console.error('Error deleting person:', error);
+          alert(`The person '${name}' was already deleted from the server.`);
+          setPersons(persons.filter(person => person.id !== id));
+        });
+    }
+  };
+
+  const personsToShow = filter
+    ? persons.filter(person => person.name.toLowerCase().includes(filter.toLowerCase()))
+    : persons;
+
+  return (
+    <div className="app-container">
+      <div className="left-panel">
+        <h2>Phonebook</h2>
+        <Filter filter={filter} onFilterChange={handleFilterChange} />
+        <h2>Add a new</h2>
+        <PersonForm
+          newName={newName}
+          newNumber={newNumber}
+          onNameChange={handlePersonChange}
+          onNumberChange={handleNumberChange}
+          onSubmit={addPerson}
+        />
+      </div>
+      <div className="right-panel">
+        <h2>Numbers</h2>
+        <Persons persons={personsToShow} onDelete={handleDelete} />
+      </div>
     </div>
-    <div className="right-panel">
-      <h2>Numbers</h2>
-      <Persons persons={personsToShow} />
-    </div>
-  </div>
-);
-}
+  );
+};
 
-export default App
+export default App;
