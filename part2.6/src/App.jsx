@@ -4,12 +4,14 @@ import Persons from './Persons';
 import PersonForm from './PersonForm';
 import './styles.css';
 import personsServer from './services/persons';
+import Notification from './Notification'
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [filter, setFilter] = useState('');
+  const [noticeMessage, setNoticeMessage] = useState(null)
 
   useEffect(() => {
     personsServer
@@ -25,7 +27,12 @@ const App = () => {
   const addPerson = (event) => {
     event.preventDefault();
     if (!newName.trim()) {
-      alert('Please enter a name');
+      setNoticeMessage(
+        'please enter some info'
+      );
+      setTimeout(() => {
+        setNoticeMessage(null)
+      }, 5000)
       return;
     }
     const existingPerson = persons.find(person =>person.name === newName)
@@ -46,11 +53,17 @@ const App = () => {
           ))
           setNewName('')
           setNewNumber('')
-          alert(`Updated ${newName}'s number successfully.`)
+          setNoticeMessage(`Updated ${newName}'s number successfully.`)
+          setTimeout(() => {
+            setNoticeMessage(null)
+          }, 5000);
         })
         .catch(error=>{
           console.error('Error updating Person',error)
-          alert(`Failed to update ${newName}'s Number.Please check`)
+          setNoticeMessage(`Failed to update ${newName}'s Number.Please check`)
+          setTimeout(() => {
+            setNoticeMessage(null)
+          }, 5000)
           setPersons(persons.filter(person=>person.id !==existingPerson.id))
         })
       }
@@ -65,7 +78,10 @@ const App = () => {
         setPersons(persons.concat(returnedPerson));
         setNewName('');
         setNewNumber('');
-        alert(`Added ${newName} successfully`)
+        setNoticeMessage(`Added ${newName} successfully`)
+        setTimeout(() => {
+          setNoticeMessage(null)
+        }, 5000);
       })
       .catch(error => console.error('Error adding person:', error));
   };
@@ -76,10 +92,17 @@ const App = () => {
         .deletePerson(id)
         .then(() => {
           setPersons(persons.filter(person => person.id !== id));
+          setNoticeMessage(`'${name}' has been removed`)
+          setTimeout(() => {
+            setNoticeMessage(null)
+          }, 5000);
         })
         .catch(error => {
           console.error('Error deleting person:', error);
-          alert(`The person '${name}' was already deleted from the server.`);
+          setNoticeMessage(`The person '${name}' was already deleted from the server.`)
+          setTimeout(() => {
+            setNoticeMessage(null)
+          }, 5000);
           setPersons(persons.filter(person => person.id !== id));
         });
     }
@@ -95,6 +118,7 @@ const App = () => {
         <h2>Phonebook</h2>
         <Filter filter={filter} onFilterChange={handleFilterChange} />
         <h2>Add a new</h2>
+        <Notification message={noticeMessage}/>
         <PersonForm
           newName={newName}
           newNumber={newNumber}

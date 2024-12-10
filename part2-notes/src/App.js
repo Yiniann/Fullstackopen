@@ -1,11 +1,14 @@
 import { useState, useEffect} from 'react'
 import Note from './components/Note'
 import noteService from './services/notes'
-
+import Notification from './components/Notification'
+import './index.css'
+import Footer from './components/Footer'
 const App = () => {
   const [notes, setNotes] = useState([]) //应用的笔记列表状态
   const [newNote, setNewNote] = useState('')//输入框的状态
   const [showAll, setShowAll] = useState(false)//展示的列表
+  const [noticeMessage,setNoticeMessage] = useState(null)
 
   //获取数据库的notes列表
   useEffect(()=>{
@@ -56,14 +59,20 @@ const App = () => {
       setNotes(notes.map(note=> note.id !== id? note : returnedNote))
     })
     .catch(error=>{
-      alert(`the note'${note.content}'was already deleted from server`)
-      setNotes (notes.filter(n=> n.id !== id))
+      setNoticeMessage(
+        `Note '${note.content}' was already removed from server`
+      )
+      setTimeout(() => {
+        setNoticeMessage(null)
+      }, 5000)
+      setNotes(notes.filter(n => n.id !== id))
     })
   }
 
   return (
     <div>
       <h1>Notes</h1>
+      <Notification message={noticeMessage} />
       <div>
         <button onClick={() => setShowAll(!showAll)}>
           show {showAll ? 'important' : 'all' }
@@ -80,7 +89,8 @@ const App = () => {
         <input value={newNote} onChange={handleNoteChange} />
         <button type="submit">save</button>
       </form>
-    </div>
+      <Footer />
+    </div>  
   )
 }
 
