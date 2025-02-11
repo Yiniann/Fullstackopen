@@ -24,7 +24,16 @@ const App = () => {
     })
   },[])
   console.log('render', notes.length, 'notes')
-  
+
+  //检查是否存在登录token
+  useEffect(()=>{
+    const loggedUserToken = window.localStorage.getItem('loggedNoteappUser')
+    if (loggedUserToken){
+      const user =JSON.parse(loggedUserToken)
+      setUser(user)
+      noteService.setToken(user.token)
+    }
+  },[])
   //登录处理
   const handleLogin = async(event) =>{
     event.preventDefault()
@@ -32,10 +41,14 @@ const App = () => {
       const user = await loginService.login({
         username,password,
       })
-      setUser=user
+      window.localStorage.setItem(
+        'loggedNoteappUser',JSON.stringify(user)
+      )
+      noteService.setToken(user.token)
+      setUser(user)
       setUsername('')
       setPassword('')
-    } catch (expection) {
+    } catch (exception) {
       setNoticeMessage('Wrong credentials')
       setTimeout(()=>{
         setNoticeMessage(null)
@@ -43,22 +56,32 @@ const App = () => {
     }
     console.log('logging in with',username, password)
   }
+  //登出处理
+  const handleLogout = () =>{
+    window.localStorage.removeItem('loggedNoteappUser')
+    noteService.setToken(null)
+    setUser(null)
+  }
 
   //增加新笔记的事件处理
-  const addNote = (event) => {
-    event.preventDefault()//防止默认提交
+  const addNote = async (event) => {
+    event.preventDefault();
     const noteObject = {
       content: newNote,
-      date: new Date(),
-      important: Math.random() > 0.5,}
+      date: new Date().toISOString(),
+      important: Math.random() > 0.5,
+    };
     
       //将新笔记发送到数据库
-      noteService.
-      create(noteObject)
-      .then(returnedNote=>{
-        setNotes(notes.concat(returnedNote))//将res的数据加入到列表
-        setNewNote('')//重置输入框
-  })
+      try {
+        const returnedNote = await noteService.create(noteObject);
+        setNotes(notes.concat(returnedNote));
+        setNewNote('');
+      } catch (error) {
+        console.error('Error adding note:', error);
+        setNoticeMessage('Failed to add note');
+        setTimeout(() => setNoticeMessage(null), 5000);
+      }
   }
   
   //处理表单变化，注册事件处理
@@ -135,9 +158,9 @@ const App = () => {
       <Notification message={noticeMessage} />
 
       {user === null ?
-        loginForm:
+        loginForm():
         <div>
-          <p>{user.name} logged-in</p>
+          <p>{user.name} logged-in <button onClick={handleLogout}>logout</button></p>
           {noteForm()}
         </div>
     }
