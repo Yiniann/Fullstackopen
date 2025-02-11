@@ -1,14 +1,19 @@
 import { useState, useEffect} from 'react'
 import Note from './components/Note'
 import noteService from './services/notes'
+import loginService from './services/login'
 import Notification from './components/Notification'
 import './index.css'
 import Footer from './components/Footer'
+
 const App = () => {
   const [notes, setNotes] = useState([]) //应用的笔记列表状态
   const [newNote, setNewNote] = useState('')//输入框的状态
   const [showAll, setShowAll] = useState(false)//展示的列表
-  const [noticeMessage,setNoticeMessage] = useState(null)
+  const [noticeMessage,setNoticeMessage] = useState(null)//通知信息状态
+  const [username,setUsername] = useState('')//账号状态
+  const [password,setPassword] = useState('')//密码状态
+  const [user,setUser] = useState(null)
 
   //获取数据库的notes列表
   useEffect(()=>{
@@ -19,6 +24,25 @@ const App = () => {
     })
   },[])
   console.log('render', notes.length, 'notes')
+  
+  //登录处理
+  const handleLogin = async(event) =>{
+    event.preventDefault()
+    try {
+      const user = await loginService.login({
+        username,password,
+      })
+      setUser=user
+      setUsername('')
+      setPassword('')
+    } catch (expection) {
+      setNoticeMessage('Wrong credentials')
+      setTimeout(()=>{
+        setNoticeMessage(null)
+      },5000)
+    }
+    console.log('logging in with',username, password)
+  }
 
   //增加新笔记的事件处理
   const addNote = (event) => {
@@ -69,10 +93,55 @@ const App = () => {
     })
   }
 
+  //登录表单
+  const loginForm = () =>(
+    <form onSubmit={handleLogin}>
+        <div>
+          username
+            <input
+            type='text'
+            value={username}
+            name='Username'
+            onChange={({target})=>setUsername(target.value)}
+            />
+        </div>
+        <div>
+          password
+            <input
+            type='password'
+            value={password}
+            name='Password'
+            onChange={({target})=>setPassword(target.value)}
+            />
+        </div>
+        <button type="submit">login</button>
+      </form>
+  )
+
+  //note表单
+  const noteForm = () =>(
+    <form onSubmit={addNote}>
+        <input 
+        value={newNote} 
+        onChange={handleNoteChange} />
+        <button type="submit">save</button>
+      </form>
+  )
+
   return (
     <div>
       <h1>Notes</h1>
+
       <Notification message={noticeMessage} />
+
+      {user === null ?
+        loginForm:
+        <div>
+          <p>{user.name} logged-in</p>
+          {noteForm()}
+        </div>
+    }
+      
       <div>
         <button onClick={() => setShowAll(!showAll)}>
           show {showAll ? 'important' : 'all' }
@@ -85,10 +154,7 @@ const App = () => {
           toggleImportance={()=>toggleImportanceOf(note.id)} />
         )}
       </ul>
-      <form onSubmit={addNote}>
-        <input value={newNote} onChange={handleNoteChange} />
-        <button type="submit">save</button>
-      </form>
+      
       <Footer />
     </div>  
   )
